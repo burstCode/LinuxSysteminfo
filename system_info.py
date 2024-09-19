@@ -1,14 +1,25 @@
-# Для получения данных о установленном дистрибутиве: cat /etc/*-release
-
 import os
 import shutil
 
 
+# Возвращает информацию об установленной ОС и дистрибутиве
+def get_dist_info() -> str:
+    dist_info = "--- Информация о дистрибутиве ---\n"
+
+    with open("/etc/os-release") as f:
+        for line in f:
+            if "PRETTY_NAME" in line:
+                dist_info += line.split("=")[1].strip("\"\"")
+                break
+
+    return dist_info
+
+
+# Возвращает общую информацию о процессоре
 def get_cpu_info() -> str:
-    # Возвращает общую информацию о процессоре
     cpu_info = "--- Информация о процессоре ---\n"
 
-    # Извлечение архитектуры
+    # Извлечение информации о архитектуре
     uname_arch = os.uname().machine
     cpu_info += f"Архитектура: {uname_arch}\n"
 
@@ -29,8 +40,8 @@ def get_cpu_info() -> str:
     return cpu_info
 
 
+# Возвращает информацию о дисковом пространстве
 def get_disk_usage(path="/") -> str:
-    # Возвращает информацию о дисковом пространстве
     total, used, free = shutil.disk_usage(path)
 
     return (
@@ -40,9 +51,11 @@ def get_disk_usage(path="/") -> str:
         f"Свободно: {round(free / (2 ** 30), 2)} Гб\n"
     )
 
-def get_memory_info():
-    """Возвращает общее количество памяти, свободное, занятое и частоту памяти."""
+
+# Возвращает информацию по памяти
+def get_memory_info() -> str:
     mem_info = "--- Информация о памяти ---\n"
+
     with open("/proc/meminfo", "r") as f:
         for line in f:
             if "MemTotal" in line:
@@ -54,7 +67,8 @@ def get_memory_info():
             elif "Active:" in line:
                 mem_info += f"Используемая память: {int(line.split(":")[1].strip().split()[0]) // 1024} Мб\n"
 
-    # Частота памяти может не быть прямо доступной в meminfo, но можно попробовать извлечь из lshw
+    # НЕ РАБОТАЕТ!!!
+    # Частота памяти не доступна из meminfo, но можно попробовать извлечь из lshw
     try:
         from subprocess import check_output
         lshw_output = check_output(["lshw", "-C", "memory"]).decode("utf-8").splitlines()
@@ -65,4 +79,3 @@ def get_memory_info():
         mem_info += "Частота памяти: Н/Д"
 
     return mem_info
-
